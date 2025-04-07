@@ -1,0 +1,229 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Linkforce JHA Generator</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; }
+    header { background-color: #002d56; color: white; padding: 20px; text-align: center; }
+    header img { max-height: 50px; margin-bottom: 10px; }
+    main { max-width: 900px; margin: auto; background: white; padding: 20px; }
+    h2 { color: #002d56; }
+    .section { margin-bottom: 30px; }
+    select, input, textarea, button {
+      width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px;
+      border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box;
+    }
+    button { background-color: #0055a4; color: white; border: none; cursor: pointer; }
+    button:hover { background-color: #003f7d; }
+    .output { white-space: pre-wrap; background: #eef3f8; padding: 15px; border-radius: 5px; border: 1px solid #ccc; }
+    .hazard-block { border: 1px solid #ccc; padding: 15px; margin-top: 15px; border-radius: 5px; background: #f9f9f9; }
+  </style>
+  <style id="darkModeStyles" disabled>
+    body { background: #1e1e1e; color: #f0f0f0; }
+    main { background: #2a2a2a; }
+    header { background-color: #111; }
+    input, textarea, select, .output {
+      background: #333; color: #f0f0f0; border: 1px solid #666;
+    }
+    button { background-color: #444; color: #f0f0f0; }
+    button:hover { background-color: #666; }
+    .hazard-block { background: #2a2a2a; border: 1px solid #444; }
+  </style>
+  <script>
+    function toggleDarkMode() {
+      const style = document.getElementById('darkModeStyles');
+      style.disabled = !style.disabled;
+    }
+  </script>
+</head>
+<body>
+
+<header>
+  <img src="linkforce-logo.png" alt="Linkforce Logo" />
+  <h1>Linkforce JHA Generator</h1>
+</header>
+
+<main>
+  <button onclick="toggleDarkMode()">Toggle Dark Mode</button><br><br>
+
+  <h2>Step-Based Job Hazard Analysis</h2>
+
+  <div class="section">
+    <label>Job Step:</label>
+    <input type="text" id="jobStep" placeholder="e.g. Lock on / Sign on" />
+
+    <div id="hazardsContainer"></div>
+    <button type="button" onclick="addHazard()">+ Add Hazard/Control</button>
+  </div>
+
+  <button onclick="generateFinalOutput()">Generate JHA Text</button>
+
+  <div class="section">
+    <h3>Generated JHA Output</h3>
+    <div id="finalOutput" class="output">Your JHA report will appear here...</div>
+  </div>
+</main>
+
+<script>
+const hazardData = {
+  isolation: {
+    risk: "We will be locking onto permit/isolation, which could lead to locking onto an incorrect permit, resulting in serious injuries or damage to plant.",
+    controls: [
+      "Lock on as a team",
+      "Verify asset IDs",
+      "Ask questions if unsure",
+      "Confirm with permit issuer"
+    ]
+  },
+  manual_handling: {
+    risk: "Manual handling of equipment could lead to sprains, strains or dropped objects resulting in injury.",
+    controls: [
+      "Use proper lifting technique",
+      "Break task into smaller loads",
+      "Use mechanical aids",
+      "Ask for assistance"
+    ]
+  },
+  pinch_points: {
+    risk: "Working around moving equipment could expose workers to pinch points, leading to hand or finger injuries.",
+    controls: [
+      "Keep hands clear of moving parts",
+      "Use tools to position items",
+      "Identify and avoid pinch zones"
+    ]
+  },
+  line_of_fire: {
+    risk: "Working in the line of fire may result in impact or crush injuries from moving equipment or dropped objects.",
+    controls: [
+      "Position yourself out of the line of fire",
+      "Use barricades or spotters",
+      "Maintain visual awareness"
+    ]
+  },
+  working_at_heights: {
+    risk: "Working at height poses fall risks which can result in serious injury or fatality.",
+    controls: [
+      "Use fall protection equipment",
+      "Check anchor points",
+      "Inspect ladders before use"
+    ]
+  },
+  confined_space: {
+    risk: "Entering confined spaces may result in oxygen deficiency, entrapment or exposure to toxic gases.",
+    controls: [
+      "Test atmosphere before entry",
+      "Use gas detector",
+      "Have standby person outside",
+      "Follow confined space permit"
+    ]
+  },
+  hot_work: {
+    risk: "Hot work activities like grinding or welding can cause fire or burns due to sparks and heat.",
+    controls: [
+      "Use fire blanket",
+      "Have fire extinguisher nearby",
+      "Wear heat-resistant PPE",
+      "Ensure permit to work is approved"
+    ]
+  },
+  pressure_release: {
+    risk: "Uncontrolled release of pressure may lead to hose whip or explosion causing injury.",
+    controls: [
+      "Depressurize system before work",
+      "Wear face shield and gloves",
+      "Secure all connections",
+      "Verify isolation"
+    ]
+  },
+  slips_trips_falls: {
+    risk: "Walking to or from the job front could expose workers to slips, trips or falls from uneven surfaces.",
+    controls: [
+      "Use 3 points of contact",
+      "Keep eyes on path",
+      "Wear proper footwear"
+    ]
+  },
+  noise_vibration: {
+    risk: "High noise and vibration levels can lead to hearing loss or hand-arm vibration syndrome.",
+    controls: [
+      "Wear hearing protection",
+      "Limit exposure time",
+      "Use anti-vibration gloves"
+    ]
+  }
+};
+
+function addHazard() {
+  const container = document.getElementById("hazardsContainer");
+  const block = document.createElement("div");
+  block.className = "hazard-block";
+
+  const hazardOptions = Object.keys(hazardData).map(key =>
+    `<option value="${key}">${key.replace(/_/g, " ")}</option>`).join("");
+
+  block.innerHTML = `
+    <label>Select Hazard/Risk:</label>
+    <select class="hazardSelect" onchange="updateHazardBlock(this)">
+      <option value="">-- Select a Hazard --</option>
+      ${hazardOptions}
+    </select>
+
+    <label>Auto-Generated Risk:</label>
+    <textarea class="riskText" rows="2" readonly></textarea>
+
+    <label>Select Controls:</label>
+    <select class="controlSelect" multiple size="5" style="min-height: 100px;"></select>
+  `;
+
+  container.appendChild(block);
+}
+
+function updateHazardBlock(selectEl) {
+  const block = selectEl.closest(".hazard-block");
+  const riskBox = block.querySelector(".riskText");
+  const controlSelect = block.querySelector(".controlSelect");
+  const value = selectEl.value;
+
+  if (hazardData[value]) {
+    riskBox.value = hazardData[value].risk;
+    controlSelect.innerHTML = "";
+    hazardData[value].controls.forEach(c => {
+      const opt = document.createElement("option");
+      opt.textContent = c;
+      controlSelect.appendChild(opt);
+    });
+  } else {
+    riskBox.value = "";
+    controlSelect.innerHTML = "";
+  }
+}
+
+function generateFinalOutput() {
+  const step = document.getElementById("jobStep").value;
+  let output = `Job Step: ${step}
+`;
+
+  document.querySelectorAll(".hazard-block").forEach((block, i) => {
+    const risk = block.querySelector(".riskText").value;
+    const controls = Array.from(block.querySelector(".controlSelect").selectedOptions).map(opt => opt.value);
+    output += `
+Hazard ${i + 1}:
+${risk}
+Controls:
+` + controls.map(c => "- " + c).join("
+") + "
+";
+  });
+
+  document.getElementById("finalOutput").innerText = output.trim();
+}
+
+// Add default block on load
+window.onload = () => addHazard();
+</script>
+
+</body>
+</html>
